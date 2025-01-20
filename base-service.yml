@@ -1,0 +1,38 @@
+services:
+
+  # Define os parâmetros genéricos usados por todos os outros serviços de base.
+  base:
+    env_file:
+      - .env
+    extra_hosts:
+      - iprzasc01mon01.impacta.adv.br:172.31.1.50
+      - iprzasc01mon02.impacta.adv.br:172.31.1.51
+      - iprzasc01arb01.impacta.adv.br:172.31.1.53
+      - iprzasc01mon-big01.impacta.adv.br:172.31.1.54
+      - iprzasc01mon-big02.impacta.adv.br:172.31.1.55
+      - iprzasc01mon-big03.impacta.adv.br:172.31.1.56
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Define o serviço de base utilizado pela aplicação do FastAPI.
+  base-app:
+    extends:
+      service: base
+    build:
+      context: .
+      target: default_stage
+      args:
+        workdir: ${COMPOSE_PROJECT_NAME}
+
+  # Define o serviço de base utilizado pelos workers celery.
+  base-worker:
+    extends:
+      service: base
+    build:
+      context: .
+      target: worker_stage
+      args:
+        workdir: ${COMPOSE_PROJECT_NAME}

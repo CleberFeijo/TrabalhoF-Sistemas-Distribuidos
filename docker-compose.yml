@@ -1,0 +1,84 @@
+services:
+
+  # Aplicação FastAPI (Com Uvicorn/Gunicorn, dependendo do ambiente)
+  app:
+    container_name: ${COMPOSE_PROJECT_NAME}-app
+    command: python -m app.main
+    extends:
+      service: base-app
+      file: base-service.yml
+    environment:
+      # Mongo connection
+      MONGO_DB_DATABASE_NAME: ${MONGODB_DATABASE_NAME}
+      MONGO_DB_USER: ${MONGODB_ADMIN_USERNAME}
+      MONGO_DB_PASSWORD: ${MONGODB_ADMIN_PASSWORD}
+      MONGO_DB_PORT: ${MONGODB_PORT}
+      MONGO_DB_HOST: ${MONGODB_HOST}
+      MONGO_DB_DEBUG: ${MONGODB_DEBUG}
+      
+      # JWT secrets
+      CREATE_USER_PASSWORD: ${CREATE_USER_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - ${APP_PORT}:${APP_PORT}
+    restart: always
+    volumes:  # Permite a correta funcionalidade do --reload.
+      - ./src:/${COMPOSE_PROJECT_NAME}/
+    
+  mongo:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "${MONGODB_PORT}:${MONGODB_PORT}"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_DATABASE_NAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ADMIN_PASSWORD}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+
+  # RabbitMQ (Message Broker) local.
+  rabbitmq:
+    container_name: ${COMPOSE_PROJECT_NAME}-rabbitmq
+    image: rabbitmq:3.9.14-management-alpine
+    hostname: rabbitmq  # Hostname é obrigatório para a persistência das filas.
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 30s
+      retries: 3
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - ${RABBITMQ_PORT}:5672
+      - ${RABBITMQ_MANAGEMENT_PORT}:15672
+    volumes:
+      - rabbitmq-volume:/var/lib/rabbitmq/mnesia
+    
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "${REDIS_PORT}:6379"
+
+  # Worker Principal
+  worker:
+    container_name: ${COMPOSE_PROJECT_NAME}-worker
+    extends:
+      service: base-worker
+      file: base-service.yml
+    restart: always
+    command: celery -A mq.tasks_worker worker --loglevel=info
+    volumes:
+      - ./src:/${COMPOSE_PROJECT_NAME}/
+    depends_on:
+      - rabbitmq
+      - redis
+
+volumes:
+  rabbitmq-volume:
+  mongo_data:
+  mongo_config:

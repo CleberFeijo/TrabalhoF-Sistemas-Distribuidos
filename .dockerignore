@@ -1,0 +1,20 @@
+# Git
+**/.git
+**/.gitignore
+
+# IDE
+**/.vscode
+**/.idea
+
+# Docker
+**/Dockerfile
+**/base-service.yml
+
+# Virtual Env.
+venv*
+env*
+virtualenv*
+
+# Misc.
+**/*.template
+**/*.md

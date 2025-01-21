@@ -34,6 +34,7 @@ class Hist:
             }
 
             for history in response:
+                history_dict['tem_curiosidade'] = True
                 history_dict['list_curiosidades'].append({
                     'curiosidade': history["curiosity"],
                     'websocket_id': str(history["_id"])

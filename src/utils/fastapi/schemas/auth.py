@@ -10,7 +10,6 @@ class LoginAttempt(BaseModel):
 class CreateUserAsAdmin(BaseModel):
     name: str
     last_name: str
-    company_id: int
     role: str
     email: EmailStr
     password: str

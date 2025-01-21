@@ -50,7 +50,6 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme)) -> U
         id=str(user["_id"]),
         name=user["name"],
         last_name=user["last_name"],
-        company_id=user["company_id"],
         roles=user["roles"],
     )
     return user_route
@@ -101,7 +100,6 @@ def get_current_user_by_api_key(Authorization: Optional[str] = Header(None)):
         id=str(user["_id"]),
         name=user["name"],
         last_name=user["last_name"],
-        company_id=user["company_id"],
         roles=user["roles"],
     )
 
@@ -135,7 +133,6 @@ def decode_ws_token(token: str):
         id=str(user["_id"]),
         name=user["name"],
         last_name=user["last_name"],
-        company_id=user["company_id"],
         role=user["role"],
     )
     return ObjectId(payload["document_id"]), user_

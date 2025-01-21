@@ -8,7 +8,6 @@ class UserRouteSchema(BaseModel):
     id: ObjectIdField
     name: str
     last_name: str
-    company_id: int
     roles: List[str]
 
 
@@ -16,7 +15,6 @@ class UserSchema(BaseModel):
     _id: ObjectIdField
     name: str
     last_name: str
-    company_id: int
     email: EmailStr
     hash_password: str
     roles: List[str]
@@ -25,7 +23,6 @@ class UserSchema(BaseModel):
 class UserCreateSchema(BaseModel):
     name: str
     last_name: str
-    company_id: int
     email: EmailStr
     password: str
     roles: List[str]
@@ -35,7 +32,6 @@ class UserCreateSchema(BaseModel):
 class UserCreateBasicSchema(BaseModel):
     name: str
     last_name: str
-    company_id: int
     email: str
 
 

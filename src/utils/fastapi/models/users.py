@@ -7,7 +7,6 @@ from typing import List, Optional
 class UserShortView(BaseModel):
     name: str
     last_name: str
-    company_id: int
     role: str
 
 
@@ -39,7 +38,6 @@ class UserUpdateModel(BaseModel):
 class UserModel(BaseModel):
     name: str
     last_name: str
-    company_id: int
     roles: List[str]
     email: str
     hashed_password: str

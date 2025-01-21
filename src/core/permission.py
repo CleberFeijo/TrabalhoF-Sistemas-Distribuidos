@@ -5,7 +5,6 @@ from core.database.connections import roles_collection
 class UserPermission:
     permission = {
         "ownership": "self",
-        "scope": "company",
         "view": False,
         "create": False,
         "update": False,
@@ -15,7 +14,6 @@ class UserPermission:
     def __init__(self, user: UserRouteSchema, permission_name: str):
         self.user = user
         self.permission_name = permission_name
-        self.company_id = self.getCompanyId()
         self.permissions = self.get_roles_by_names__(self.user.roles)
         self.permission = self.get_highest_permission()
         self.query_obj = self.create_query_obj()
@@ -45,19 +43,8 @@ class UserPermission:
                 except (TypeError, KeyError):
                     raise ValueError("User ID not found")
 
-    def getCompanyId(self):
-        try:
-            return self.user.company_id
-        except AttributeError:
-            try:
-                return self.user["company_id"]
-            except (TypeError, KeyError):
-                raise ValueError("Company ID not found")
-
     def create_query_obj(self):
         query_obj = {}
-        if self.permission["scope"] == "company":
-            query_obj["company_id"] = self.company_id
 
         if self.permission["ownership"] == "self":
             query_obj["user_id"] = self.getUserId()
@@ -103,9 +90,6 @@ class UserPermission:
                 permission_details["scope"] = permission.get("scope", "company")
 
         self.query_obj = {}
-
-        if permission_details["scope"] == "company":
-            self.query_obj["company_id"] = self.company_id
 
         if permission_details["ownership"] == "self":
             self.query_obj["user_id"] = self.getUserId()

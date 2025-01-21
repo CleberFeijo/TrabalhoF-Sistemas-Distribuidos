@@ -34,7 +34,7 @@ def initialize_collections(db: MongoDatabase):
     :return: Dicionário com todas as coleções.
     """
     return {
-        "histories_collection": db.get_collection("documents"),
+        "histories_collection": db.get_collection("histories"),
         "users_collection": db.get_collection("users"),
         "api_key_collection": db.get_collection("api_key"),
         "roles_collection": db.get_collection("roles")
@@ -45,7 +45,7 @@ def initialize_collections(db: MongoDatabase):
 logger.info(f"DEBUG_MODE: {settings.MONGO_DEBUG}")
 
 mongo_uri = settings.mongo_uri
-db_name = "features-extraction"
+db_name = settings.MONGO_DATABASE
 
 mongo_db = MongoDatabase(uri=mongo_uri, db_name=db_name)
 collections = initialize_collections(mongo_db)
@@ -55,3 +55,5 @@ histories_collection = collections["histories_collection"]
 users_collection = collections["users_collection"]
 api_key_collection = collections["api_key_collection"]
 roles_collection = collections["roles_collection"]
+
+histories_collection.create_index([("location", "2dsphere")])

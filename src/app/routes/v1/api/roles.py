@@ -8,7 +8,9 @@ from utils.fastapi.models.response import (
 from crud.crud_roles import CRUDRoles
 from pydantic import BaseModel
 
-router = APIRouter()
+__all__ = 'router',
+
+router = APIRouter(prefix='/roles', tags=['Roles'])
 
 
 @router.get("")

@@ -1,15 +1,12 @@
 from fastapi_restful.cbv import cbv
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 from app.crud.crud_user import CRUDUser
 from ..deps import get_current_user
-from utils.fastapi.models.response import ResponseModel
-from utils.fastapi.models.response import ResponseModelDict, ResponseModelList
+from utils.fastapi.models.response import ResponseModelDict
 from utils.fastapi.models.users import (
     UserCreationModel,
-    # UserUpdateRolesModel,
     UserUpdateModel,
-    UserUpdatePasswordModel,
-    ListUserPerPageModel,
+    UserUpdatePasswordModel
 )
 from utils.pydantic import ObjectIdField
 from loguru import logger
@@ -18,7 +15,7 @@ from utils.fastapi import OpenAPISchemaFactory
 
 __all__ = 'router',
 
-router = APIRouter(prefix='/exemplo', tags=['Exemplo'])
+router = APIRouter(prefix='/user', tags=['User'])
 
 
 @cbv(router)

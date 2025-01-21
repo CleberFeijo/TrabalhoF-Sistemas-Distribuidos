@@ -1,6 +1,6 @@
 from typing import Optional
 from core.config import settings
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from pydantic import BaseModel
 from jose import JWTError, jwt
 from app.crud.crud_user import CRUDUser
@@ -12,18 +12,14 @@ from bson import ObjectId
 from app.crud.crud_api_key import CRUDAPIKeys
 from core.security import OAuth2CustomBearer
 import base64
-
-oauth2_scheme = OAuth2CustomBearer(
-    password_token_url=f"{settings.API_V1_STR}/auth/login",
-    client_credentials_token_url=f"{settings.API_V1_STR}/auth/token",
-)
+from core.auth import oauth2_scheme
 
 
 class TokenData(BaseModel):
     id_user: Optional[ObjectIdField] = None
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> UserRouteSchema:
+def get_current_user(request: Request, token: str = Depends(oauth2_scheme)) -> UserRouteSchema:
     try:
         payload: dict = jwt.decode(
             token,

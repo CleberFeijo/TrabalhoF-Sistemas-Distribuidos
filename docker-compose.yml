@@ -30,10 +30,10 @@ services:
     container_name: mongodb
     restart: always
     ports:
-      - "${MONGODB_PORT}:${MONGODB_PORT}"
+      - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_DATABASE_NAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ADMIN_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
     volumes:
       - mongo_data:/data/db
       - mongo_config:/data/configdb

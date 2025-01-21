@@ -19,7 +19,6 @@ class UserUpdatePasswordModel(BaseModel):
 class UserCreationModel(BaseModel):
     name: str
     last_name: str
-    company_id: int
     email: str
 
 

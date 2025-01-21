@@ -30,7 +30,7 @@ class DictField(ObjectId):
         field_schema.update(type="dict")
 
     @classmethod
-    def validate(cls, v: dict):
+    def validate(cls, v: dict, values: dict = None):
         return clear_objectid_in_dict(v)
     
 

@@ -38,7 +38,7 @@ class CRUDUser(UserPermission):
             logger.info("User created successfully!")
             created_user = users_collection.find_one(
                 {"_id": result.inserted_id},
-                {"hashed_password": 0, "pedmais_info.token": 0},
+                {"hashed_password": 0},
             )
             return created_user
         except DuplicateKeyError as e:

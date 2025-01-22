@@ -35,9 +35,10 @@ class Hist:
             }
 
             for history in response:
+                creator = CRUDUser(user).get_by_email(history["email"])
                 history_dict['tem_curiosidade'] = True
                 history_dict['list_curiosidades'].append({
-                    'curiosidade': f'{user.name} {user.last_name}: {history["curiosity"]}',
+                    'curiosidade': f'{creator["name"]} {creator["last_name"]}: {history["curiosity"]}',
                     'websocket_id': str(history["_id"])
                 })         
 

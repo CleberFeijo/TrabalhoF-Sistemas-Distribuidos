@@ -19,6 +19,7 @@ class UserCreationModel(BaseModel):
     name: str
     last_name: str
     email: str
+    password: str
 
 
 class ListUserPerPageModel(BaseModel):
@@ -41,7 +42,6 @@ class UserModel(BaseModel):
     roles: List[str]
     email: str
     hashed_password: str
-    pedmais_info: Optional[dict] = None
 
 
 class LogTimeModel(BaseModel):

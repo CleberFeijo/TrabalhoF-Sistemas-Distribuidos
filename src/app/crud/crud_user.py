@@ -21,9 +21,7 @@ class CRUDUser(UserPermission):
     def create_user(self, user: UserCreateBasicSchema):
         self.can_create()
 
-        default_password = os.getenv("USER_DEFAULT_PASSWORD")
-
-        hashed_password = get_password_hash(default_password)
+        hashed_password = get_password_hash(user.password)
 
         new_user = UserModel(
             name=user.name,

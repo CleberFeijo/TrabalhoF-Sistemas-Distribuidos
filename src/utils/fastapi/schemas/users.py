@@ -26,13 +26,13 @@ class UserCreateSchema(BaseModel):
     email: EmailStr
     password: str
     roles: List[str]
-    pedmais_info: Optional[dict] = None
 
 
 class UserCreateBasicSchema(BaseModel):
     name: str
     last_name: str
     email: str
+    password: str
 
 
 class UserLogSchema(BaseModel):

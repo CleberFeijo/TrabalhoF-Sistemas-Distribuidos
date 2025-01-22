@@ -1,5 +1,6 @@
 from core.loggers import Loggers
 from core.settings import env
+from core.database.connections import populate_database
 
 __all__ = 'on_startup',
 
@@ -8,6 +9,8 @@ logger = Loggers()
 
 def on_startup() -> None:
     """Método chamado ao (re)iniciar a aplicação do FastAPI."""
+
+    populate_database()
 
     if env.is_dev():
         _run_flake8()

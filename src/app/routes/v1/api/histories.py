@@ -1,6 +1,7 @@
 from fastapi_restful.cbv import cbv
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.crud.crud_histories import CRUDHist
+from app.crud.crud_user import CRUDUser
 from ..deps import get_current_user
 from utils.fastapi.models.response import ResponseModelDict
 from utils.fastapi.models.history import (
@@ -25,7 +26,7 @@ class Hist:
         summary="History information",
         description="Returns the curiosity and the webhook for chat connection.",
     )
-    async def getHistory(self, history=Depends(HistoryGetModel)):
+    async def getHistory(self, user=Depends(get_current_user), history=Depends(HistoryGetModel)):
         try:
             response = CRUDHist().get_by_location(history.location)
             history_dict = {
@@ -36,7 +37,7 @@ class Hist:
             for history in response:
                 history_dict['tem_curiosidade'] = True
                 history_dict['list_curiosidades'].append({
-                    'curiosidade': history["curiosity"],
+                    'curiosidade': f'{user.name} {user.last_name}: {history["curiosity"]}',
                     'websocket_id': str(history["_id"])
                 })         
 
@@ -50,7 +51,7 @@ class Hist:
     @router.post(
         path='/',
     )
-    def postHistory(self, body: HistoryCreationModel):
+    def postHistory(self, body: HistoryCreationModel, user=Depends(get_current_user)):
         try:
         # Try to create the user
             _ = CRUDHist().create_history(body)
@@ -64,7 +65,7 @@ class Hist:
                 history_dict['tem_curiosidade'] = True
                 print("Daqui tá passando!")
                 history_dict['list_curiosidades'].append({
-                    'curiosidade': history["curiosity"],
+                    'curiosidade': f'{user.name} {user.last_name}: {history["curiosity"]}',
                     'websocket_id': str(history["_id"])
                 })   
 

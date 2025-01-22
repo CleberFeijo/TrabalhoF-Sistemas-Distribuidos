@@ -43,7 +43,6 @@ app = App(
     },
 )
 
-
 app.app.include_router(api.HistRouter)
 app.app.include_router(api.UserRouter)
 app.app.include_router(api.AuthRouter)
@@ -61,13 +60,14 @@ async def status():
 manager = ConnectionManager()
 
 @app.app.websocket('/{ws_id}/ws')
-async def websocket_endpoint(websocket: WebSocket, ws_id: str, user_id: str, user_name: str):
+async def websocket_endpoint(websocket: WebSocket, ws_id: str, user_name: str):
     try:
-        await manager.connect(user_id, websocket)
+        await manager.connect(ws_id, websocket)
         message = f"O usuário {user_name} acabou de entrar no chat!"
         try:
             while message != "----Fim----":
                 message = await websocket.receive_text()
+                print(f"Essa é a mensagem: {message}")
                 await manager.broadcast(
                     id_=ws_id,
                     message=f'{user_name}:\n\t{message}'

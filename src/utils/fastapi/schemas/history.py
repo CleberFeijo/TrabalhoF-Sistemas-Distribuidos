@@ -6,6 +6,7 @@ class HistoryPostSchema(BaseModel):
     curiosity: str
     location: dict
     email: EmailStr
+    update: str
 
 
 class HistoryGetSchema(BaseModel):

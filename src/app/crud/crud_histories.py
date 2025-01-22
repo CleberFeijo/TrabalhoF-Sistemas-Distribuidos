@@ -21,7 +21,8 @@ class CRUDHist():
                 "type": "Point",
                 "coordinates": [longitude, latitude],
             },
-            email=history.email
+            email=history.email,
+            update=datetime.now().timestamp()
         ).__dict__
 
         try:
@@ -60,7 +61,7 @@ class CRUDHist():
                         "$maxDistance": radius,
                     }
                 }
-            })
+            }).sort('update')
 
             return list(results)
         except Exception as e:

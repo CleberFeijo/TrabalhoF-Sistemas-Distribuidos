@@ -84,3 +84,8 @@ venv*/
 ### IDE ###
 .idea
 .vscode
+
+### Tools ###
+.ruff_cache/
+.env.*
+!.env.example

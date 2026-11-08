@@ -1,84 +1,114 @@
-services:
+# Ambiente local do Hist.
+#
+#   cp .env.example .env    # e preencha os segredos
+#   docker compose up -d --build
+#
+# API em http://localhost:8080 (Swagger em /docs).
+# Bancos e filas só ficam acessíveis pela rede interna do compose; as portas
+# publicadas abaixo escutam apenas em 127.0.0.1 (nunca expostas na internet).
 
-  # Aplicação FastAPI (Com Uvicorn/Gunicorn, dependendo do ambiente)
-  app:
-    container_name: ${COMPOSE_PROJECT_NAME}-app
-    command: python -m app.main
-    extends:
-      service: base-app
-      file: base-service.yml
+services:
+  api:
+    build:
+      context: ./backend
+      target: base
+    env_file: .env
     environment:
-      # Mongo connection
-      MONGO_DB_DATABASE_NAME: ${MONGODB_DATABASE_NAME}
-      MONGO_DB_USER: ${MONGODB_ADMIN_USERNAME}
-      MONGO_DB_PASSWORD: ${MONGODB_ADMIN_PASSWORD}
-      MONGO_DB_PORT: ${MONGODB_PORT}
-      MONGO_DB_HOST: ${MONGODB_HOST}
-      MONGO_DB_DEBUG: ${MONGODB_DEBUG}
-      
-      # JWT secrets
-      CREATE_USER_PASSWORD: ${CREATE_USER_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
+      MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD:?defina MONGO_ROOT_PASSWORD no .env}@mongo:27017/?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}@redis:6379/0
+      CELERY_BROKER_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672//
     ports:
-      - ${APP_PORT}:${APP_PORT}
-    restart: always
-    volumes:  # Permite a correta funcionalidade do --reload.
-      - ./src:/${COMPOSE_PROJECT_NAME}/
-    
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   mongo:
-    image: mongo:latest
-    container_name: mongodb
-    restart: always
-    ports:
-      - "27017:27017"
+    image: mongo:8.0
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    ports:
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo_data:/data/db
-      - mongo_config:/data/configdb
-
-  # RabbitMQ (Message Broker) local.
-  rabbitmq:
-    container_name: ${COMPOSE_PROJECT_NAME}-rabbitmq
-    image: rabbitmq:3.9.14-management-alpine
-    hostname: rabbitmq  # Hostname é obrigatório para a persistência das filas.
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 15s
-      timeout: 30s
-      retries: 3
-    restart: always
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-    ports:
-      - ${RABBITMQ_PORT}:5672
-      - ${RABBITMQ_MANAGEMENT_PORT}:15672
-    volumes:
-      - rabbitmq-volume:/var/lib/rabbitmq/mnesia
-    
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - "${REDIS_PORT}:6379"
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
-  # Worker Principal
-  worker:
-    container_name: ${COMPOSE_PROJECT_NAME}-worker
-    extends:
-      service: base-worker
-      file: base-service.yml
-    restart: always
-    command: celery -A mq.tasks_worker worker --loglevel=info
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    restart: unless-stopped
+
+  # ---- Tarefas em segundo plano (crawler). Suba com: docker compose --profile worker up -d
+  rabbitmq:
+    profiles: ["worker"]
+    image: rabbitmq:3.13-management-alpine
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "127.0.0.1:15672:15672"  # painel de administração (só local)
     volumes:
-      - ./src:/${COMPOSE_PROJECT_NAME}/
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    restart: unless-stopped
+
+  worker:
+    profiles: ["worker"]
+    build:
+      context: ./backend
+      target: base
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=info", "--concurrency=1"]
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD:?defina MONGO_ROOT_PASSWORD no .env}@mongo:27017/?authSource=admin
+      CELERY_BROKER_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672//
+    healthcheck:
+      disable: true
     depends_on:
-      - rabbitmq
-      - redis
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---- Testes: docker compose --profile test run --rm tests
+  tests:
+    profiles: ["test"]
+    build:
+      context: ./backend
+      target: test
+    environment:
+      MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD:?defina MONGO_ROOT_PASSWORD no .env}@mongo:27017/?authSource=admin
+      REDIS_URL_TEST: redis://:${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}@redis:6379/1
+    healthcheck:
+      disable: true
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
-  rabbitmq-volume:
   mongo_data:
-  mongo_config:
+  rabbitmq_data:

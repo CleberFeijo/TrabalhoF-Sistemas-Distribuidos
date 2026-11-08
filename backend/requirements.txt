@@ -1,0 +1,11 @@
+bcrypt==5.0.0
+celery==5.7.0
+email-validator==2.3.0
+fastapi==0.162.2
+pydantic==2.14.3
+pydantic-settings==2.16.2
+pyjwt==2.15.1
+pymongo==4.19.0
+python-multipart==0.0.33
+redis==8.1.0
+uvicorn[standard]==0.54.0
